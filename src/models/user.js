@@ -1,23 +1,67 @@
-var mongoose = require('mongoose')
-var bcrypt = require('bcrypt')
+var mongoose = require('mongoose'),
+      bcrypt = require('bcrypt'),
+      uniqueValidator = require('mongoose-unique-validator')
+
+var emailReg = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
 var userSchema = new mongoose.Schema({
-    fullName: String,
-    emailAddress: String,
-    password: String
+    fullName: {
+        type: String,
+        required: [true, 'We need a name'],
+        trim: true
+    },
+    emailAddress: {
+        type: String,
+        unique: [true, 'User with this email already exist'],
+        match: [emailReg, 'The email needs to be in a valid format'],
+        required: [true, 'We need an email'],
+        trim: true,
+        lowercase: true
+    },
+    password: {
+        type: String,
+        required: [true, 'We need a password']
+    },
+    confirmPassword: {
+      type: String,
+      required: [true, 'We need a confirm password']
+    }
 })
 
+
+//Here we validate if the password and confirmPassword match
+userSchema.pre('validate', function(next) {
+  if (this.password !== this.confirmPassword) {
+    this.invalidate('password', 'The Password submitted dose not match the confirm password')
+  }
+  next()
+})
+
+
 userSchema.pre('save', function(next) {
-    //this is here an instance of the userSchema
     const saltRounds = 10 //pew pew pew
-    bcrypt.hash(this.password, saltRounds, function(err, hash) {
+    var user = this
+    //You may think that this is not nessesary, BUT IT IS!
+    //If you don't assign this to user the hashed password can't get assigned to the password, and therefore won't get saved
+
+
+    bcrypt.hash(user.password, saltRounds, function(err, hash) {
+
         if (err) {
             next(err)
         }
-        this.password = hash
-        next()
+        //Since mongoosejs .pre 'save' calls the .pre 'validate' function before exicuting,
+        //this function will only exicute if the validate function is validated
+        //therefore the confirmPassword must be eaqual to password so
+        //to save calulating time and code space we can assign password and confirmPassword to the same hash
+
+        user.password = hash
+        user.confirmPassword = hash
+
+        return next()
     })
 })
 
+userSchema.plugin(uniqueValidator) //This makes the uniqe validation error look the same as the other validation errors
 
 module.exports.User = mongoose.model('User', userSchema)

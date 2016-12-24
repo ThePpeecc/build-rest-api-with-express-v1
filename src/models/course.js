@@ -7,15 +7,36 @@ var courseSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User'
     },
-    title: String,
-    description: String,
+    title: {
+        type: String,
+        required: [true, 'We need a title']
+    },
+    description: {
+        type: String,
+        required: [true, 'We need a description']
+    },
     estimatedTime: String,
     materialsNeeded: String,
-    steps: [{
-        stepNumber: Number,
-        title: String,
-        description: String
-    }],
+    steps: {
+        type: [{
+            stepNumber: Number,
+            title: {
+                type: String,
+                required: [true, 'We need a step title']
+            },
+            description: {
+                type: String,
+                required: [true, 'We need a step description']
+            },
+        }],
+        validate: {
+            validator: function(steps) { //Validator function
+                return steps.length > 0 ? true : false
+            },
+            message: 'We need at least one step'
+        },
+        required: [true, 'We need steps']
+    },
     reviews: [{
         type: Schema.Types.ObjectId,
         ref: 'Review' //We refer to the Review model. Read more about it here http://mongoosejs.com/docs/populate.html

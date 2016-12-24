@@ -3,8 +3,8 @@ var express = require('express')
 
 var User = require('../models/user').User,
     Review = require('../models/review').Review,
-    Course = require('../models/course').Course
-
+    Course = require('../models/course').Course,
+    mid = require('../middleware/mid')
 var router = express.Router()
 
 
@@ -27,11 +27,18 @@ router.get('/courses', function(req, res, next) {
         })
 })
 
-router.post('/courses', function(req, res, next) {
+router.post('/courses', mid.isAuth, function(req, res, next) {
     res.status = 201
-    return res.json({
-        "stuff": 'stuff'
-    })
+        //The logged in user must be the same user is referred to in the created the post
+    if (req.body.user._id == req.currentUser._id) {
+        var course = new Course(req.body)
+        course.save(function(err, course) {
+            if (err) {
+                return next(err)
+            }
+            res.json(course)
+        })
+    }
 })
 
 // /api/courses/:id
@@ -43,7 +50,6 @@ router.get('/courses/:idCourse', function(req, res, next) {
         .populate('reviews')
         .populate('user')
         .exec(function(err, course) {
-            console.log(course);
             if (err) {
                 next(err)
             }
@@ -54,17 +60,54 @@ router.get('/courses/:idCourse', function(req, res, next) {
         })
 })
 
-router.put('/courses/:idCourse', function(req, res, next) {
-    res.status = 204
-    return res.json({
-        "demo": req.params.idCourse
-    })
+router.put('/courses/:idCourse', mid.isAuth, function(req, res, next) {
+
+    //The logged in user must be the same as the user that created the post
+    if (req.body.user._id == req.currentUser._id) {
+        Course.findOneAndUpdate(req.params.idCourse, req.body)
+            .exec(function(err, course) {
+                if (err) {
+                    next(err)
+                }
+                res.status = 204
+                return res.json(course)
+            })
+    } else {
+        var err = new Error('You do not have authentication to update this course')
+        err.status = 401
+        next(err)
+    }
 })
 
 // /api/courses/:courseId/reviews
 // POST - Creates a review for the specified course
-router.post('/courses/:idCourse/reviews', function(req, res, next) {
+router.post('/courses/:idCourse/reviews', mid.isAuth, function(req, res, next) {
     res.status = 201
+
+    Course.findById(req.params.idCourse)
+        .populate('reviews')
+        .populate('user')
+        .exec(function(err, course) {
+            if (err) {
+                next(err)
+            }
+
+            var newReview = new Review(req.body)
+
+            newReview.save(function(err, review) {
+                if (err) {
+                    next(err)
+                }
+                course.reviews.push(review)
+                course.save(function(err, course) {
+                    if (err) {
+                        next(err)
+                    }
+                    res.json(course);
+                })
+            })
+        })
+
     return res.json({
         "demo": req.params.idCourse
     })
@@ -72,7 +115,7 @@ router.post('/courses/:idCourse/reviews', function(req, res, next) {
 
 // /api/courses/:courseId/reviews/:id
 // DELETE - Deletes a review
-router.delete('/courses/:idCourse/reviews/:idReview', function(req, res, next) {
+router.delete('/courses/:idCourse/reviews/:idReview', mid.isAuth, function(req, res, next) {
     res.status = 204
     return res.json({
         "idC": req.params.idCourse,
@@ -83,17 +126,22 @@ router.delete('/courses/:idCourse/reviews/:idReview', function(req, res, next) {
 // /api/users
 // GET - Returns the current user
 // POST - Creates a user
-router.get('/users', function(req, res, next) {
+router.get('/users', mid.isAuth, function(req, res, next) {
     res.status = 200
     return res.json({
-        "demo": 'Hello :D'
+        data: [req.currentUser]
     })
 })
 
 router.post('/users', function(req, res, next) {
     res.status = 201
-    return res.json({
-        "demo": 'Hello 2'
+    var user = new User(req.body)
+    user.save(function(err, user) {
+        if (err) {
+            err.status = 400
+            return next(err)
+        }
+        return res.json(user)
     })
 })
 
