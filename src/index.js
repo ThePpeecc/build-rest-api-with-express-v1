@@ -82,13 +82,13 @@ app.use(function(err, req, res, next) {
 
 
 app.use(function(err, req, res) {
-
     res.status = err.status||500
-    return res.json(err)
+    return res.json(err.toJSON())
 })
 
 //Incase of a database error
 db.on('error', function(err) {
+    console.log('Failed to connect to database')
     console.error('connection error:', err)
 })
 

@@ -61,7 +61,7 @@ router.post('/courses', mid.isAuth, function(req, res, next) {
 router.get('/courses/:idCourse', function(req, res, next) {
     Course.findById(req.params.idCourse) //We find the course by the supplied id
         .populate('reviews')
-        .populate('user') //We populate the reviews and user
+        .populate('user', '_id') //We populate the reviews and user
         .exec(function(err, course) {
             if (err) { //if err
                 return next(err)
@@ -79,7 +79,7 @@ router.get('/courses/:idCourse', function(req, res, next) {
 router.put('/courses/:idCourse', mid.isAuth, function(req, res, next) {
     //The logged in user must be the same as the user that created the post
     if (req.body.user._id == req.currentUser._id) {
-        Course.findOneAndUpdate(req.params.idCourse, req.body) //We find and try to update the course
+        Course.findOneAndUpdate({'_id': req.params.idCourse}, req.body) //We find and try to update the course
             .exec(function(err) {
                 if (err) { //If err
                     return next(err)
@@ -100,7 +100,7 @@ router.put('/courses/:idCourse', mid.isAuth, function(req, res, next) {
 router.post('/courses/:idCourse/reviews', mid.isAuth, function(req, res, next) {
     Course.findById(req.params.idCourse) //We find the course
         .populate('reviews')
-        .populate('user')
+        .populate('user', '_id')
         .exec(function(err, course) {
             if (err) { //if err
                 return next(err)
@@ -133,7 +133,7 @@ router.post('/courses/:idCourse/reviews', mid.isAuth, function(req, res, next) {
 router.delete('/courses/:idCourse/reviews/:idReview', mid.isAuth, function(req, res, next) {
     Course.findById(req.params.idCourse) //We find the course
         .populate('reviews')
-        .populate('user')
+        .populate('user', '_id')
         .exec(function(err, course) {
             if (err) {
                 return next(err)
@@ -156,7 +156,7 @@ router.delete('/courses/:idCourse/reviews/:idReview', mid.isAuth, function(req, 
             }
 
             Review.findById(req.params.idReview) //We try to find the review
-                .populate('user')
+                .populate('user', '_id')
                 .exec(function(err, review) {
                     if (err) { //if err
                         return next(err)
