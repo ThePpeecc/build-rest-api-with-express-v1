@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "eslint": "^3.12.2",
     "gulp": "^3.9.1",
     "gulp-nodemon": "^2.2.1",
     "nodemon": "^1.9.1",
