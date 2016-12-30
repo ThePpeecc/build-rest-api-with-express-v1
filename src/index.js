@@ -1,4 +1,4 @@
-/*eslint no-console: ["error", { allow: ["warn", "error", "log"] }] */
+/*eslint no-console: ["error", { allow: ["warn", "error", "log"] }] no-unused-vars: ["error", { "args": "none" }] */
 'use strict'
 
 /**
@@ -56,9 +56,9 @@ app.use(function(req, res, next) { //<-- see that this has no error, therefore t
     next(err) //Send to error handler
 })
 
-//Middleware error handler, that takes care of Mongoose validation errors
+//The error handler
 app.use(function(err, req, res, next) {
-    if (err.name === 'ValidationError') {
+    if (err.name === 'ValidationError') { // error handler, that takes care of Mongoose validation errors
         var properties = []
         var errors = err.errors
 
@@ -68,7 +68,6 @@ app.use(function(err, req, res, next) {
                 code: errors[errorProp].kind
             })
         }
-
         err = {
             'message': 'Validation Failed',
             'errors': {
@@ -76,15 +75,16 @@ app.use(function(err, req, res, next) {
             },
             'status': err.status
         }
+    } else {//It is an uncought error so we return the message with a status
+        err = {
+            'message': err.message,
+            'status': err.status
+        }
     }
-    return next(err)
+    res.status(err.status || 500)
+    return res.json(err) //We send the error
 })
 
-
-app.use(function(err, req, res) {
-    res.status = err.status||500
-    return res.json(err.toJSON())
-})
 
 //Incase of a database error
 db.on('error', function(err) {
