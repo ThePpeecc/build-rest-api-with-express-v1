@@ -38,7 +38,7 @@ var userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'We need a confirm password']
     }
-})
+}, { id: false })
 
 
 //Here we validate if the password and confirmPassword match

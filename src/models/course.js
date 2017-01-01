@@ -53,7 +53,7 @@ var courseSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Review' //We refer to the Review model. Read more about it here http://mongoosejs.com/docs/populate.html
     }]
-})
+}, { id: false })
 
 //We setup the viertual overallRating
 courseSchema.virtual('overallRating').get(function() {

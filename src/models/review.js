@@ -28,7 +28,7 @@ var reviewSchema = new mongoose.Schema({
         max: [5, 'The rating may not exeed 5']
     },
     review: String
-})
+}, { id: false })
 
 reviewSchema.pre('save', function(next) {
     this.rating = Math.floor(this.rating) //We floor the rating before we save
