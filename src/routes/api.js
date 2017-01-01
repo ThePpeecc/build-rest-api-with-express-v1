@@ -78,7 +78,7 @@ router.get('/courses/:idCourse', function(req, res, next) {
 
             res.status(200)
             return res.json({
-                data: [course] //Return the courses
+                data: [course.toJSON({virtuals: true })] //Return the courses with the virtual property
             })
         })
 })
